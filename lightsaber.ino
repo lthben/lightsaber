@@ -1,5 +1,5 @@
 /*
-Author:      Benjamin Low (Lthben@gmail.com)
+Author:      Benjamin Low (benjamin.low@digimagic.com.sg)
  Date:        11 Dec 2014
  Description: 
  Arduino code for controlling the ws2812 leds for 
@@ -16,19 +16,17 @@ Author:      Benjamin Low (Lthben@gmail.com)
 
 #define PIN 6 //data pin for the leds
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(39, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(37, PIN, NEO_GRB + NEO_KHZ800);
 
-const int switchPin = 11;
-const int powerButtonPin = 12;
-const int healthButtonPin = 13;
+const int powerButtonPin = 9; //for power on and off animations
+const int healthButtonPin = 10; //to reduce the health
 
-boolean isPowerButtonPressed, isPowerOn;
-boolean isHealthButtonPressed;
+boolean isPowerButtonPressed; //prevent state switching when button is held down
+boolean isHealthButtonPressed; //prevent state switching when button is held down
 
-int healthBar = 0; //full health has 18 bars 
+int healthBar = 0; //tracks amount of health
 
 void setup() {
-        pinMode(switchPin, INPUT);
         pinMode(powerButtonPin, INPUT);
         pinMode(healthButtonPin, INPUT);
         Serial.begin(9600);
@@ -38,53 +36,46 @@ void setup() {
 
 void loop() {
 
-        if (digitalRead(switchPin) == HIGH) { //passive power switch 
+        //active power button
+        if (digitalRead(powerButtonPin) == HIGH){ 
 
-                //active power button
-                if (digitalRead(powerButtonPin) == HIGH){ 
+                if (isPowerButtonPressed == false){
 
-                        if (isPowerButtonPressed == false){
+                        isPowerButtonPressed = true;
 
-                                isPowerButtonPressed = true;
+                        if  (healthBar == 0) {
 
-                                if  (isPowerOn == false) {
+                                power_on_animation();
 
-                                        isPowerOn = true;
+                                Serial.println("power on\n");
+                        } 
+                        else if (healthBar > 0) {
 
-                                        power_on_animation();
+                                power_off_animation();
 
-                                        Serial.println("power on\n");
-                                } 
-                                else if (isPowerOn == true) {
-
-                                        isPowerOn = false;
-
-                                        power_off_animation();
-
-                                        Serial.println("power off\n\n");
-                                }
+                                Serial.println("power off\n\n");
                         }
-                }   
-                else if (digitalRead(powerButtonPin) == LOW) {
-                        isPowerButtonPressed = false;       
                 }
+        }   
+        else if (digitalRead(powerButtonPin) == LOW) {
+                isPowerButtonPressed = false;       
+        }
 
-                // health button
-                if (digitalRead(healthButtonPin) == HIGH) {
+        // health button
+        if (digitalRead(healthButtonPin) == HIGH) {
 
-                        if (isHealthButtonPressed == false) {
+                if (isHealthButtonPressed == false) {
 
-                                isHealthButtonPressed = true;
+                        isHealthButtonPressed = true;
 
-                                decrement_health();
-                                
-                                Serial.print("health: ");
-                                Serial.println(healthBar); 
-                        }
-                } 
-                else if (digitalRead(healthButtonPin) == LOW) {
-                        isHealthButtonPressed = false;
+                        decrement_health();
+
+                        Serial.print("health: ");
+                        Serial.println(healthBar); 
                 }
+        } 
+        else if (digitalRead(healthButtonPin) == LOW) {
+                isHealthButtonPressed = false;
         }
 }
 
@@ -97,50 +88,88 @@ Pixel density for the strip is 66 per metre.
  alternate leds starting from pos 4. 
  */
 void power_on_animation() {
-        
+
         healthBar = 18;
-        
-        for (int ledPos=4; ledPos<39; ledPos+=2) {
-                int shownHealth = (ledPos - 4)/2;      
+
+        for (int ledPos=2; ledPos<37; ledPos+=2) {
+                int shownHealth = (ledPos - 2)/2;      
                 if (healthBar > shownHealth) {
                         strip.setPixelColor(ledPos, strip.Color(127, 0, 0) );
 
                         strip.show();
-                        delay(50);
+                        delay(25);
                 }
         }
 }
 
 void power_off_animation() {
 
-        int currUpToLitLED = healthBar * 2 + 4;
+        int currUpToLitLED = healthBar * 2 + 2;
 
-        for (int ledPos=currUpToLitLED; ledPos>3; ledPos-=2) {
+        for (int ledPos=currUpToLitLED; ledPos>1; ledPos-=2) {
 
                 strip.setPixelColor(ledPos, 0);
 
                 healthBar--; 
 
                 strip.show();
-                delay(50);
+                delay(25);
         }
-       
-       healthBar = 0;//actually it became -1, so rectify to 0
+
+        healthBar = 0;//actually it became -1, so rectify to 0
 }
 
 void decrement_health() {
-  
+
+        /*
         if (healthBar > 0) {
-                int currUpToLitLED = (healthBar-1) * 2 + 4;
-                
-                strip.setPixelColor(currUpToLitLED, 0);
-                
-                healthBar--;
-                
-                strip.show();
-                delay(100);
+         int currUpToLitLED = (healthBar-1) * 2 + 4;
+         
+         strip.setPixelColor(currUpToLitLED, 0);
+         
+         healthBar--;
+         
+         strip.show();
+         delay(500);
+         }
+         */
+
+
+        if (healthBar > 0) {
+
+                decrement_by_one();
+                decrement_by_one();
+                decrement_by_one();
+
         }
+
 }
+
+void decrement_by_one() {
+        int currUpToLitLED = (healthBar-1) * 2 + 2;
+
+        int brightness = 127;
+
+        while (brightness > 0){
+
+                strip.setPixelColor(currUpToLitLED, strip.Color(brightness, 0, 0));              
+
+                brightness--;
+
+                strip.show(); 
+        }
+
+        strip.setPixelColor(currUpToLitLED, 0);
+
+        strip.show();  
+
+        healthBar --;
+}
+
+
+
+
+
 
 
 
