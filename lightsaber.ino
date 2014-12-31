@@ -1,15 +1,27 @@
 /*
-Author:      Benjamin Low (benjamin.low@digimagic.com.sg)
- Date:        11 Dec 2014
+ Author:  Benjamin Low (benjamin.low@digimagic.com.sg)
+ 
  Description: 
- Arduino code for controlling the ws2812 leds for 
- a hacked Hasbro lightsaber. 
- This version of the lightsaber tracks a health bar determined by 
- the number of lit leds.
- There is a passive on-off switch and two buttons. 
- The first button is an active on-off switch that will reset the 
- health bar to 18. 
- The second button will decrement the health bar by 1 each time it is pressed.
+ Arduino code for controlling the ws2812 leds for a hacked 
+ Hasbro lightsaber. There is a passive on-off battery switch 
+ and two buttons. The first button is an active on-off switch 
+ that will cycle through the modes as indicated by the colours
+ ROYGBV. The second button will perform the animation effects 
+ for each mode. 
+ 
+ Revisions:
+ 11 Dec 2014: First version. Red mode only. 
+ 30 Dec 2014: Added new modes.
+ 
+ Notes:
+ Pixel density for the strip is 66 per metre.
+ Ignore first few leds because they are not used.
+ 37 leds total on the 60cm strip. Therefore, they 
+ are numbered from 0 to 36. We want 18 leds to light up, 
+ so light up alternate leds starting from pos 2. 
+ All brightness levels are maxed at 127 instead of 
+ the possible 255 to conserve battery power.
+ 
  */
 
 #include <Adafruit_NeoPixel.h>
@@ -18,153 +30,59 @@ Author:      Benjamin Low (benjamin.low@digimagic.com.sg)
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(37, PIN, NEO_GRB + NEO_KHZ800);
 
-const int powerButtonPin = 9; //for power on and off animations
-const int healthButtonPin = 10; //to reduce the health
+const int REDMODE = 1, ORANGEMODE = 2, YELLOWMODE = 3, GREENMODE = 4, BLUEMODE = 5, VIOLETMODE = 6; //the different modes for the animation
+int mode;
+
+const int powerButtonPin = 9; 
+const int animationButtonPin = 10; 
 
 boolean isPowerButtonPressed; //prevent state switching when button is held down
-boolean isHealthButtonPressed; //prevent state switching when button is held down
+boolean isAnimationButtonPressed; 
 
-int healthBar = 0; //tracks amount of health
+int animationSpeed = 25;//delay in ms
+
+//REDMODE
+int healthBar = 0; //tracks amount of health for REDMODE
+
+//ORANGEMODE
+boolean isDoOrange = false; //triggers on and off the ORANGEMODE animation effect
+int brightLevel = 127; //brightness in ORANGEMODE only
+int brightLevelDirection = 1;
+
+//YELLOWMODE
+boolean isDoYellow = false;
+int colourIndex = 0; //to keep track of the Wheel colour
+
+//GREENMODE
+boolean isDoGreen = false;
+long startTime, timeInterval;
 
 void setup() {
         pinMode(powerButtonPin, INPUT);
-        pinMode(healthButtonPin, INPUT);
+        pinMode(animationButtonPin, INPUT);
         Serial.begin(9600);
         strip.begin();
         strip.show();
+
+        mode = GREENMODE;
 }
 
 void loop() {
 
-        //active power button
-        if (digitalRead(powerButtonPin) == HIGH){ 
+        power_animation(); //power on and off animations for each mode
 
-                if (isPowerButtonPressed == false){
-
-                        isPowerButtonPressed = true;
-
-                        if  (healthBar == 0) {
-
-                                power_on_animation();
-
-                                Serial.println("power on\n");
-                        } 
-                        else if (healthBar > 0) {
-
-                                power_off_animation();
-
-                                Serial.println("power off\n\n");
-                        }
-                }
-        }   
-        else if (digitalRead(powerButtonPin) == LOW) {
-                isPowerButtonPressed = false;       
-        }
-
-        // health button
-        if (digitalRead(healthButtonPin) == HIGH) {
-
-                if (isHealthButtonPressed == false) {
-
-                        isHealthButtonPressed = true;
-
-                        decrement_health();
-
-                        Serial.print("health: ");
-                        Serial.println(healthBar); 
-                }
-        } 
-        else if (digitalRead(healthButtonPin) == LOW) {
-                isHealthButtonPressed = false;
-        }
+        mode_animation(); //animation effects for each mode       
 }
 
-/*
-Pixel density for the strip is 66 per metre.
- Ignore first few leds because they are not used.
- 39 leds total on the ~60cm strip. Therefore, they 
- are numbered from 0 to 38.
- We want 18 leds to light up, so light up
- alternate leds starting from pos 4. 
- */
-void power_on_animation() {
-
-        healthBar = 18;
-
-        for (int ledPos=2; ledPos<37; ledPos+=2) {
-                int shownHealth = (ledPos - 2)/2;      
-                if (healthBar > shownHealth) {
-                        strip.setPixelColor(ledPos, strip.Color(127, 0, 0) );
-
-                        strip.show();
-                        delay(25);
-                }
-        }
-}
-
-void power_off_animation() {
-
-        int currUpToLitLED = healthBar * 2 + 2;
-
-        for (int ledPos=currUpToLitLED; ledPos>1; ledPos-=2) {
-
-                strip.setPixelColor(ledPos, 0);
-
-                healthBar--; 
-
-                strip.show();
-                delay(25);
-        }
-
-        healthBar = 0;//actually it became -1, so rectify to 0
-}
-
-void decrement_health() {
-
-        /*
-        if (healthBar > 0) {
-         int currUpToLitLED = (healthBar-1) * 2 + 4;
-         
-         strip.setPixelColor(currUpToLitLED, 0);
-         
-         healthBar--;
-         
-         strip.show();
-         delay(500);
-         }
-         */
 
 
-        if (healthBar > 0) {
 
-                decrement_by_one();
-                decrement_by_one();
-                decrement_by_one();
 
-        }
 
-}
 
-void decrement_by_one() {
-        int currUpToLitLED = (healthBar-1) * 2 + 2;
 
-        int brightness = 127;
 
-        while (brightness > 0){
 
-                strip.setPixelColor(currUpToLitLED, strip.Color(brightness, 0, 0));              
-
-                brightness--;
-
-                strip.show(); 
-        }
-
-        strip.setPixelColor(currUpToLitLED, 0);
-
-        strip.show();  
-
-        healthBar --;
-}
 
 
 
