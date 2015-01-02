@@ -2,7 +2,7 @@ void power_animation() {
         /*
         Power on animation for all modes
          */
-        if (digitalRead(powerButtonPin) == HIGH){ 
+        if (digitalRead(POWERBUTTONPIN) == HIGH){ 
 
                 if (isPowerButtonPressed == false){
 
@@ -18,7 +18,7 @@ void power_animation() {
                         }
                 }
         }   
-        else if (digitalRead(powerButtonPin) == LOW) {
+        else if (digitalRead(POWERBUTTONPIN) == LOW) {
                 isPowerButtonPressed = false;       
         }
 }
@@ -55,7 +55,7 @@ void power_on_animation() {
                 }
 
                 strip.show();
-                delay(animationSpeed); 
+                delay(ANIMATIONSPEED); 
         }
 }
 
@@ -63,7 +63,17 @@ void power_off_animation() {
         /*
         Helper function for power_animation
          */
-        int currUpToLitLED = healthBar * 2 + 2;
+         
+         //turn all on before turning all off
+         if (mode == BLUEMODE) {
+                 for (int ledPos = 2; ledPos<strip.numPixels(); ledPos+=2) {
+                                 strip.setPixelColor(ledPos, strip.Color(0, 0, 127) );
+                 }
+                 strip.show();
+         }
+         
+        //power down animation
+        int currUpToLitLED = healthBar * 2;
 
         for (int ledPos=currUpToLitLED; ledPos>1; ledPos-=2) {
 
@@ -72,7 +82,8 @@ void power_off_animation() {
                 healthBar--; 
 
                 strip.show();
-                delay(animationSpeed);
+                
+                delay(ANIMATIONSPEED); 
         }
 
         healthBar = 0;//actually it became -1, so rectify to 0
@@ -82,7 +93,26 @@ void power_off_animation() {
                 mode = REDMODE;
         } 
         else {
-                mode++;   
+                mode++;  
+
+               //initialisations of the various modes
+               if (mode == ORANGEMODE) {
+                       isDoOrange = false;
+               }
+               else if (mode == YELLOWMODE) {
+                        colourIndex = STARTCOLOURINDEX;  
+                    isDoYellow = false;  
+               } else if (mode == GREENMODE) {
+                       isDoGreen = false;  
+                        timeInterval = random(LOWERTIMEBOUND, UPPERTIMEBOUND);
+                        startTime = millis();    
+                        whichDirection = random(0, 2); //returns either 0 or 1     
+               } else if (mode == BLUEMODE) {
+                        isDoBlue = false;   
+                            isBlueOnInitialised = false;     
+               } else if (mode == VIOLETMODE) {
+                        isDoViolet = false;       
+               }
         }
 }
 

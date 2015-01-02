@@ -33,13 +33,13 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(37, PIN, NEO_GRB + NEO_KHZ800);
 const int REDMODE = 1, ORANGEMODE = 2, YELLOWMODE = 3, GREENMODE = 4, BLUEMODE = 5, VIOLETMODE = 6; //the different modes for the animation
 int mode;
 
-const int powerButtonPin = 9; 
-const int animationButtonPin = 10; 
+const int POWERBUTTONPIN = 9; 
+const int ANIMATIONBUTTONPIN = 10; 
 
 boolean isPowerButtonPressed; //prevent state switching when button is held down
 boolean isAnimationButtonPressed; 
 
-int animationSpeed = 25;//delay in ms
+const int ANIMATIONSPEED = 25;//delay in ms
 
 //REDMODE
 int healthBar = 0; //tracks amount of health for REDMODE
@@ -51,15 +51,26 @@ int brightLevelDirection = 1;
 
 //YELLOWMODE
 boolean isDoYellow = false;
-int colourIndex = 0; //to keep track of the Wheel colour
+const int STARTCOLOURINDEX = 35;
+int colourIndex = STARTCOLOURINDEX; //to keep track of the Wheel colour
 
 //GREENMODE
 boolean isDoGreen = false;
+int whichDirection; //randomised direction for the glitch animation
 long startTime, timeInterval;
+const int LOWERTIMEBOUND = 500, UPPERTIMEBOUND = 2000; //for the randomised time interval duration
+
+//BLUEMODE
+boolean isDoBlue = false;
+boolean isBlueOnInitialised = false; //for initialising the animation ON animation
+boolean isBlueOffInitialised = false; //for initialising the animation OFF animation
+
+//VIOLETMODE
+boolean isDoViolet = false;
 
 void setup() {
-        pinMode(powerButtonPin, INPUT);
-        pinMode(animationButtonPin, INPUT);
+        pinMode(POWERBUTTONPIN, INPUT);
+        pinMode(ANIMATIONBUTTONPIN, INPUT);
         Serial.begin(9600);
         strip.begin();
         strip.show();
