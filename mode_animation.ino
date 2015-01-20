@@ -148,6 +148,8 @@ void do_greenmode_animation() {
                         strip.show();
                         delay(ANIMATIONSPEED);         
                 }
+                
+                strip.setPixelColor(2, 0,127,0);
         }
 }
 

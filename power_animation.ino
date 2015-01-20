@@ -78,7 +78,7 @@ void power_off_animation() {
         for (int ledPos=currUpToLitLED; ledPos>1; ledPos-=2) {
 
                 strip.setPixelColor(ledPos, 0);
-
+ 
                 healthBar--; 
 
                 strip.show();
